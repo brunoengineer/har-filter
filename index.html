@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HAR Filter</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <span class="logo">&#9654; HAR Filter</span>
+      <span class="header-sub">Client-side HAR filtering — nothing leaves your browser</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- ── UPLOAD ZONE ─────────────────────────────────────── -->
+    <section id="upload-section">
+      <div id="drop-zone" role="button" tabindex="0" aria-label="Drop or select a HAR file">
+        <div class="drop-icon">&#8659;</div>
+        <p class="drop-primary">Drop your <code>.har</code> file here</p>
+        <p class="drop-secondary">or <label class="file-label" for="file-input">browse files</label></p>
+        <input type="file" id="file-input" accept=".har,application/json" hidden />
+      </div>
+      <div id="file-info" class="hidden">
+        <span id="file-name"></span>
+        <span id="file-size"></span>
+        <button id="clear-file" class="btn btn-ghost" title="Remove file">&#10005;</button>
+      </div>
+      <div id="parse-status" class="status-bar hidden"></div>
+    </section>
+
+    <!-- ── FILTER PANEL ───────────────────────────────────── -->
+    <section id="filter-section" class="hidden">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Filter Rules</h2>
+          <div class="tab-bar" role="tablist">
+            <button class="tab active" id="tab-visual" role="tab" aria-selected="true" aria-controls="panel-visual">
+              Visual
+            </button>
+            <button class="tab" id="tab-jq" role="tab" aria-selected="false" aria-controls="panel-jq">
+              jq Script
+            </button>
+          </div>
+        </div>
+
+        <!-- Visual filter tab -->
+        <div id="panel-visual" role="tabpanel" class="tab-panel">
+          <div class="filter-grid">
+
+            <!-- URL pattern -->
+            <div class="filter-group">
+              <label class="filter-label">URL Pattern</label>
+              <div class="url-row">
+                <input type="text" id="url-pattern" class="input-text" placeholder="e.g. /api/ or ^https://example" spellcheck="false" />
+                <label class="toggle-label">
+                  <input type="checkbox" id="url-is-regex" />
+                  <span>regex</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- HTTP methods -->
+            <div class="filter-group">
+              <label class="filter-label">HTTP Method</label>
+              <div id="method-checkboxes" class="checkbox-row"></div>
+            </div>
+
+            <!-- Status code range -->
+            <div class="filter-group">
+              <label class="filter-label">Status Code</label>
+              <div class="range-row">
+                <input type="number" id="status-min" class="input-number" placeholder="100" min="0" max="999" />
+                <span class="range-sep">–</span>
+                <input type="number" id="status-max" class="input-number" placeholder="599" min="0" max="999" />
+              </div>
+            </div>
+
+            <!-- MIME types -->
+            <div class="filter-group">
+              <label class="filter-label">Response MIME Type</label>
+              <div id="mime-checkboxes" class="checkbox-grid"></div>
+            </div>
+
+            <!-- Exclude domains -->
+            <div class="filter-group filter-group--wide">
+              <label class="filter-label" for="exclude-domains">Exclude Domains <span class="hint">(one per line)</span></label>
+              <textarea id="exclude-domains" class="input-textarea" rows="3" placeholder="cdn.example.com&#10;analytics.google.com" spellcheck="false"></textarea>
+            </div>
+
+          </div><!-- /filter-grid -->
+        </div><!-- /panel-visual -->
+
+        <!-- jq Script tab -->
+        <div id="panel-jq" role="tabpanel" class="tab-panel hidden">
+          <div class="jq-header">
+            <p class="jq-hint">
+              Write a <code>jq</code> filter expression below — or ask an AI to generate one.<br />
+              <span class="jq-example">Example: <code>.log.entries |= map(select(.response.status == 200))</code></span>
+            </p>
+            <a class="btn btn-ghost btn-sm" href="https://jqlang.org/manual/" target="_blank" rel="noopener">jq docs &#8599;</a>
+          </div>
+          <textarea id="jq-expression" class="input-code" rows="6" spellcheck="false" placeholder=".log.entries |= map(select(
+  (.request.url | contains(&quot;/api/&quot;)) and
+  (.response.status >= 200 and .response.status < 300)
+))"></textarea>
+          <div id="jq-error" class="error-msg hidden"></div>
+          <div id="jq-loading" class="jq-loading hidden">
+            <span class="spinner"></span> Loading jq-wasm…
+          </div>
+        </div><!-- /panel-jq -->
+
+        <div class="panel-footer">
+          <button id="btn-filter" class="btn btn-primary" disabled>Filter HAR</button>
+          <button id="btn-reset-filters" class="btn btn-ghost">Reset Filters</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── OUTPUT SECTION ─────────────────────────────────── -->
+    <section id="output-section" class="hidden">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Result</h2>
+          <div id="stats-bar" class="stats-bar"></div>
+        </div>
+
+        <div class="output-actions">
+          <button id="btn-download" class="btn btn-primary">&#8595; Download .har</button>
+          <button id="btn-copy" class="btn btn-secondary">&#10697; Copy JSON</button>
+          <span id="copy-toast" class="toast hidden">Copied!</span>
+        </div>
+
+        <div class="table-wrapper">
+          <table id="preview-table">
+            <thead>
+              <tr>
+                <th data-col="method" class="sortable">Method <span class="sort-icon">&#8597;</span></th>
+                <th data-col="url" class="sortable">URL <span class="sort-icon">&#8597;</span></th>
+                <th data-col="status" class="sortable">Status <span class="sort-icon">&#8597;</span></th>
+                <th data-col="mime" class="sortable">MIME <span class="sort-icon">&#8597;</span></th>
+                <th data-col="size" class="sortable">Size <span class="sort-icon">&#8597;</span></th>
+                <th data-col="time" class="sortable">Time (ms) <span class="sort-icon">&#8597;</span></th>
+              </tr>
+            </thead>
+            <tbody id="preview-body"></tbody>
+          </table>
+          <p id="preview-truncation" class="table-note hidden"></p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>Runs entirely in your browser &mdash; no data is uploaded &mdash;
+      <a href="https://github.com/nicowillis/jq-wasm" target="_blank" rel="noopener">powered by jq-wasm</a>
+    </span>
+  </footer>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
