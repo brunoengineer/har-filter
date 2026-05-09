@@ -160,16 +160,25 @@ function buildFilterUI({ methods, mimes }) {
     heading.style.cssText = 'font-size:.72rem;margin-bottom:.25rem;';
     heading.textContent = groupLabel;
     section.appendChild(heading);
+    const seenShortNames = new Map();
     groupMimes.forEach(mime => {
+      const short = shortMime(mime);
+      if (seenShortNames.has(short)) {
+        const existingCb = seenShortNames.get(short);
+        existingCb.dataset.mimes = JSON.stringify([...JSON.parse(existingCb.dataset.mimes), mime]);
+        return;
+      }
       const lbl = document.createElement('label');
       lbl.className = 'cb-item';
       const cb = document.createElement('input');
       cb.type = 'checkbox';
       cb.value = mime;
+      cb.dataset.mimes = JSON.stringify([mime]);
       cb.checked = true;
       cb.addEventListener('change', saveVisualState);
-      lbl.append(cb, document.createTextNode(shortMime(mime)));
+      lbl.append(cb, document.createTextNode(short));
       section.appendChild(lbl);
+      seenShortNames.set(short, cb);
     });
     mimeCheckboxes.appendChild(section);
   });
@@ -223,8 +232,10 @@ function buildVisualOptions() {
   const allMethods     = [...methodCheckboxes.querySelectorAll('input[type=checkbox]')].map(cb => cb.value);
   const methods        = checkedMethods.length === allMethods.length ? [] : checkedMethods;
 
-  const checkedMimes = [...mimeCheckboxes.querySelectorAll('input[type=checkbox]:checked')].map(cb => cb.value);
-  const allMimes     = [...mimeCheckboxes.querySelectorAll('input[type=checkbox]')].map(cb => cb.value);
+  const checkedMimes = [...mimeCheckboxes.querySelectorAll('input[type=checkbox]:checked')]
+    .flatMap(cb => JSON.parse(cb.dataset.mimes || JSON.stringify([cb.value])));
+  const allMimes     = [...mimeCheckboxes.querySelectorAll('input[type=checkbox]')]
+    .flatMap(cb => JSON.parse(cb.dataset.mimes || JSON.stringify([cb.value])));
   const mimes        = checkedMimes.length === allMimes.length ? [] : checkedMimes;
 
   const excl = excludeDomains.value.trim().split('\n').map(s => s.trim().toLowerCase()).filter(Boolean);
@@ -343,9 +354,43 @@ function compareEntries(a, b, col, dir) {
 }
 
 /* ── Detail panel ─────────────────────────────────────────── */
-detailClose.addEventListener('click', () => {
+const detailBackdrop = document.getElementById('detail-backdrop');
+
+function closeDetailPanel() {
   detailPanel.classList.add('hidden');
   previewBody.querySelectorAll('tr').forEach(r => r.classList.remove('row-selected'));
+}
+
+detailClose.addEventListener('click', closeDetailPanel);
+detailBackdrop.addEventListener('click', closeDetailPanel);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetailPanel(); });
+
+/* ── Detail copy buttons ──────────────────────────────────── */
+detailPanel.addEventListener('click', async e => {
+  const btn = e.target.closest('.detail-copy-btn');
+  if (!btn) return;
+  const targetId = btn.dataset.target;
+  const pre = document.getElementById(targetId);
+  const text = pre?.textContent ?? '';
+  const toast = btn.parentElement.querySelector('.detail-copy-toast');
+  try {
+    await navigator.clipboard.writeText(text);
+    if (toast) {
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 2000);
+    }
+  } catch {
+    if (toast) {
+      toast.textContent = 'Failed!';
+      toast.style.color = 'var(--danger)';
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+        toast.textContent = 'Copied!';
+        toast.style.color = '';
+      }, 2500);
+    }
+  }
 });
 
 tabDetailReq.addEventListener('click', () => activateDetailTab('req'));
@@ -404,7 +449,6 @@ function showDetail(entry) {
 
   detailPanel.classList.remove('hidden');
   activateDetailTab('req');
-  detailPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function renderKvList(container, items) {

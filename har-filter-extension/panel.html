@@ -109,49 +109,60 @@
         <p id="preview-truncation" class="table-note hidden"></p>
       </div>
 
-      <!-- ── DETAIL PANEL ──────────────────────────────────── -->
-      <div id="detail-panel" class="hidden">
-        <div class="detail-header">
-          <div class="detail-meta">
-            <span id="detail-badge" class="td-method"></span>
-            <span id="detail-status-badge"></span>
-            <span id="detail-url-text" class="detail-url-text"></span>
-          </div>
-          <button id="detail-close" class="btn btn-ghost btn-sm">&#10005; Close</button>
-        </div>
+    </div>
+  </section>
 
-        <div class="detail-tab-bar" role="tablist">
-          <button class="tab active" id="tab-detail-req" role="tab">Request</button>
-          <button class="tab"        id="tab-detail-res" role="tab">Response</button>
+  <!-- ── DETAIL DRAWER (fixed overlay) ───────────────────── -->
+  <div id="detail-panel" class="hidden">
+    <div id="detail-backdrop"></div>
+    <div class="detail-drawer">
+      <div class="detail-header">
+        <div class="detail-meta">
+          <span id="detail-badge" class="td-method"></span>
+          <span id="detail-status-badge"></span>
+          <span id="detail-url-text" class="detail-url-text"></span>
         </div>
+        <button id="detail-close" class="btn btn-ghost btn-sm">&#10005; Close</button>
+      </div>
 
-        <!-- Request tab -->
-        <div id="panel-detail-req" class="detail-content">
-          <div class="detail-section">
-            <div class="detail-section-title">Headers</div>
-            <div id="detail-req-headers" class="detail-kv-list"></div>
-          </div>
-          <div id="detail-payload-section" class="detail-section">
-            <div class="detail-section-title">Payload</div>
-            <pre id="detail-req-body" class="detail-code"></pre>
-          </div>
+      <div class="detail-tab-bar" role="tablist">
+        <button class="tab active" id="tab-detail-req" role="tab">Request</button>
+        <button class="tab"        id="tab-detail-res" role="tab">Response</button>
+      </div>
+
+      <!-- Request tab -->
+      <div id="panel-detail-req" class="detail-content">
+        <div class="detail-section">
+          <div class="detail-section-title">Headers</div>
+          <div id="detail-req-headers" class="detail-kv-list"></div>
         </div>
-
-        <!-- Response tab -->
-        <div id="panel-detail-res" class="detail-content hidden">
-          <div class="detail-section">
-            <div class="detail-section-title">Headers</div>
-            <div id="detail-res-headers" class="detail-kv-list"></div>
+        <div id="detail-payload-section" class="detail-section">
+          <div class="detail-section-title">
+            Payload
+            <button class="btn btn-ghost btn-sm detail-copy-btn" data-target="detail-req-body" title="Copy payload">&#10697; Copy</button>
+            <span class="detail-copy-toast hidden">Copied!</span>
           </div>
-          <div class="detail-section">
-            <div class="detail-section-title">Body</div>
-            <pre id="detail-res-body" class="detail-code"></pre>
-          </div>
+          <pre id="detail-req-body" class="detail-code"></pre>
         </div>
       </div>
 
+      <!-- Response tab -->
+      <div id="panel-detail-res" class="detail-content hidden">
+        <div class="detail-section">
+          <div class="detail-section-title">Headers</div>
+          <div id="detail-res-headers" class="detail-kv-list"></div>
+        </div>
+        <div class="detail-section">
+          <div class="detail-section-title">
+            Body
+            <button class="btn btn-ghost btn-sm detail-copy-btn" data-target="detail-res-body" title="Copy body">&#10697; Copy</button>
+            <span class="detail-copy-toast hidden">Copied!</span>
+          </div>
+          <pre id="detail-res-body" class="detail-code"></pre>
+        </div>
+      </div>
     </div>
-  </section>
+  </div>
 
   <script src="panel.js"></script>
 </body>
