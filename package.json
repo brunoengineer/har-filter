@@ -1,0 +1,27 @@
+{
+  "name": "har-filter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:report": "playwright show-report"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brunoengineer/har-filter.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/brunoengineer/har-filter/issues"
+  },
+  "homepage": "https://github.com/brunoengineer/har-filter#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "serve": "^14.2.4",
+    "typescript": "^6.0.3"
+  }
+}
