@@ -26,6 +26,7 @@ The problem: a real-world HAR from a busy app can have **thousands of entries**.
 | 🔍 **Sortable preview table** | Inspect the first 100 matched entries, sortable by method, URL, status, MIME, size or time |
 | 🧠 **Remembers your filters** | Visual and script filters are saved to `localStorage` and restored on next visit |
 | 🔒 **100% client-side** | No backend, no analytics, no data ever leaves your browser |
+| 🧩 **Chrome DevTools Extension** | Filter live network traffic directly inside DevTools — no HAR export step needed |
 
 ---
 
@@ -110,6 +111,57 @@ entry.time                  →  total time in ms
 
 ---
 
+## Chrome DevTools Extension
+
+The `har-filter-extension/` directory contains a **Manifest V3** Chrome extension that embeds the full HAR Filter experience as a dedicated **DevTools panel**.
+
+### What it adds
+
+| | |
+|---|---|
+| ⚡ **Capture from Network** | One click captures all requests from the DevTools Network tab — no HAR export needed |
+| 📂 **Load .har file** | Same file-upload flow as the web app, available as a fallback |
+| 🔍 **Request detail panel** | Click any row to inspect request/response headers and body inline |
+| 🎛 **Same visual filters** | URL pattern, HTTP methods, status range, MIME types, excluded domains |
+| 💾 **Download or Copy** | Export the filtered result or copy JSON to clipboard |
+
+### Installing the extension (unpacked)
+
+> Chrome / Edge — no Chrome Web Store listing yet; load it as an unpacked extension.
+
+1. Open **chrome://extensions** (or **edge://extensions**).
+2. Enable **Developer mode** (toggle in the top-right corner).
+3. Click **Load unpacked** and select the `har-filter-extension/` folder.
+4. Open DevTools on any page — a new **HAR Filter** tab will appear in the DevTools toolbar.
+
+### Using the extension
+
+1. Navigate to a page and open DevTools (`F12`).
+2. Click the **HAR Filter** tab.
+3. Click **Capture from Network** to load all requests currently in the Network tab, **or** click **load .har file** to upload a saved archive.
+4. Apply visual filters and click **Filter HAR**.
+5. Click any row in the results table to inspect its request / response headers and body.
+6. Download the filtered `.har` or copy the JSON.
+
+### Extension structure
+
+```
+har-filter-extension/
+├── manifest.json      # Manifest V3 — declares devtools_page
+├── devtools.html      # DevTools page entry point
+├── devtools.js        # Registers the HAR Filter panel
+├── panel.html         # Panel UI markup
+├── panel.js           # Panel controller (capture, filter, detail view)
+├── worker.js          # Web Worker — parsing and filtering (same logic as web app)
+├── style.css          # Panel styles
+└── img/
+    ├── icon-16.png
+    ├── icon-48.png
+    └── icon-128.png
+```
+
+---
+
 ## Running locally
 
 No build step required — it's plain HTML, CSS and JavaScript.
@@ -184,6 +236,15 @@ har-filter/
 │   ├── har-filter.spec.ts   # End-to-end tests
 │   └── fixtures/
 │       └── sample.har       # Minimal HAR used by tests
+├── har-filter-extension/    # Chrome DevTools Extension (Manifest V3)
+│   ├── manifest.json        # Extension manifest
+│   ├── devtools.html        # DevTools entry point
+│   ├── devtools.js          # Panel registration
+│   ├── panel.html           # Panel UI markup
+│   ├── panel.js             # Panel controller
+│   ├── worker.js            # Web Worker (same logic as web app)
+│   ├── style.css            # Panel styles
+│   └── img/                 # Extension icons (16, 48, 128 px)
 └── .github/
     └── workflows/
         └── deploy.yml       # CI: test → deploy to GitHub Pages
