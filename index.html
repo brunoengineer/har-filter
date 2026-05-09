@@ -41,7 +41,7 @@
               Visual
             </button>
             <button class="tab" id="tab-jq" role="tab" aria-selected="false" aria-controls="panel-jq">
-              jq Script
+              JS Script
             </button>
           </div>
         </div>
@@ -93,25 +93,29 @@
           </div><!-- /filter-grid -->
         </div><!-- /panel-visual -->
 
-        <!-- jq Script tab -->
+        <!-- JS Script tab -->
         <div id="panel-jq" role="tabpanel" class="tab-panel hidden">
           <div class="jq-header">
             <p class="jq-hint">
-              Write a <code>jq</code> filter expression below — or ask an AI to generate one.<br />
-              <span class="jq-example">Example: <code>.log.entries |= map(select(.response.status == 200))</code></span>
+              Write a JavaScript expression using the <code>entries</code> array — no installation needed, runs in your browser.<br />
+              <span class="jq-example">The script must return an array of entries. Use <code>return entries.filter(…)</code>.</span>
             </p>
-            <a class="btn btn-ghost btn-sm" href="https://jqlang.org/manual/" target="_blank" rel="noopener">jq docs &#8599;</a>
           </div>
-          <textarea id="jq-expression" class="input-code" rows="6" spellcheck="false" placeholder=".log.entries |= map(select(
-  (.request.url | contains(&quot;/api/&quot;)) and
-  (.response.status >= 200 and .response.status < 300)
-))"></textarea>
+          <textarea id="jq-expression" class="input-code" rows="6" spellcheck="false" placeholder="// Write your filter here and click Filter HAR"></textarea>
+          <div class="js-examples">
+            <span class="js-examples-label">Examples <span class="hint">(click to use)</span></span>
+            <div class="js-example-grid">
+              <button class="js-example-btn" data-script="return entries.filter(e => e.response.status === 200);">Only 200 OK</button>
+              <button class="js-example-btn" data-script="return entries.filter(e => e.response.status >= 400);">Errors (4xx/5xx)</button>
+              <button class="js-example-btn" data-script="return entries.filter(e => e.request.url.includes('/api/'));">URL contains /api/</button>
+              <button class="js-example-btn" data-script="return entries.filter(e => e.request.method === 'POST');">Only POST</button>
+              <button class="js-example-btn" data-script="return entries.filter(e =>\n  (e.response.content?.mimeType ?? '').includes('json')\n);">Only JSON responses</button>
+              <button class="js-example-btn" data-script="return entries.filter(e =>\n  e.response.status >= 200 && e.response.status < 300 &&\n  e.request.url.includes('/api/')\n);">Successful API calls</button>
+            </div>
+          </div>
           <div id="jq-error" class="error-msg hidden">
             <span id="jq-error-text"></span>
             <button id="jq-error-close" class="error-close" title="Dismiss">&#10005;</button>
-          </div>
-          <div id="jq-loading" class="jq-loading hidden">
-            <span class="spinner"></span> Loading jq-wasm…
           </div>
         </div><!-- /panel-jq -->
 

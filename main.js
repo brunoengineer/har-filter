@@ -40,9 +40,9 @@ const excludeDomains    = document.getElementById('exclude-domains');
 
 const jqExpression      = document.getElementById('jq-expression');
 const jqError           = document.getElementById('jq-error');
+
 const jqErrorText       = document.getElementById('jq-error-text');
 const jqErrorClose      = document.getElementById('jq-error-close');
-const jqLoading         = document.getElementById('jq-loading');
 
 let jqErrorTimer = null;
 
@@ -212,11 +212,10 @@ function runFilter() {
   saveCurrentState();
 
   if (isJq) {
-    jqLoading.classList.remove('hidden');
     worker.postMessage({
       action: 'filter',
       har: currentHar,
-      mode: 'jq',
+      mode: 'js',
       options: { expression: jqExpression.value.trim() }
     });
   } else {
@@ -262,7 +261,6 @@ function buildVisualOptions() {
 /* ── Result ───────────────────────────────────────────────── */
 function handleResult({ filteredHar, matched, total }) {
   currentFiltered = filteredHar;
-  jqLoading.classList.add('hidden');
   btnFilter.disabled = false;
   btnFilter.textContent = 'Filter HAR';
 
@@ -280,7 +278,6 @@ function handleResult({ filteredHar, matched, total }) {
 }
 
 function handleWorkerError(msg) {
-  jqLoading.classList.add('hidden');
   btnFilter.disabled = false;
   btnFilter.textContent = 'Filter HAR';
 
@@ -421,7 +418,7 @@ btnResetFilters.addEventListener('click', () => {
   });
   mimeCheckboxes.querySelectorAll('input[type=checkbox]').forEach(cb => { cb.checked = true; });
   localStorage.removeItem('har-filter:visual');
-  localStorage.removeItem('har-filter:jq');
+  localStorage.removeItem('har-filter:js');
 });
 
 function resetAll(showDrop = true) {
@@ -461,14 +458,14 @@ function saveVisualState() {
 
 function saveJqState() {
   try {
-    localStorage.setItem('har-filter:jq', jqExpression.value);
+    localStorage.setItem('har-filter:js', jqExpression.value);
   } catch { /* ignore */ }
 }
 
 function restoreSavedState() {
-  // jq expression (always available)
-  const savedJq = localStorage.getItem('har-filter:jq');
-  if (savedJq) jqExpression.value = savedJq;
+  // JS expression (always available)
+  const savedJs = localStorage.getItem('har-filter:js');
+  if (savedJs) jqExpression.value = savedJs;
 
   // Visual state — only restore simple fields; checkboxes need the HAR-built UI to exist
   try {
@@ -502,6 +499,14 @@ function restoreSavedState() {
 
 // Auto-save jq expression as user types
 jqExpression.addEventListener('input', saveJqState);
+
+// Example snippet buttons
+document.querySelectorAll('.js-example-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    jqExpression.value = btn.dataset.script;
+    saveJqState();
+  });
+});
 
 // Auto-save exclude domains as user types
 excludeDomains.addEventListener('input', saveVisualState);

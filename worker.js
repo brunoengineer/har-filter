@@ -13,17 +13,6 @@
 
 'use strict';
 
-/* ── jq-wasm lazy loader ──────────────────────────────────── */
-let jqModule = null;
-
-async function loadJq() {
-  if (jqModule) return jqModule;
-  // ESM build from CDN — works in module workers
-  const mod = await import('https://cdn.jsdelivr.net/npm/jq-wasm@1.1.0-jq-1.8.1/dist/index.min.js');
-  // The package exports a default initialiser function
-  jqModule = mod.default ? await mod.default() : mod;
-  return jqModule;
-}
 
 /* ── Message handler ──────────────────────────────────────── */
 self.onmessage = async function (evt) {
@@ -79,8 +68,8 @@ async function handleFilter(har, mode, options) {
 
   if (mode === 'visual') {
     filteredEntries = applyVisualFilter(har.log.entries, options);
-  } else if (mode === 'jq') {
-    filteredEntries = await applyJqFilter(har, options.expression);
+  } else if (mode === 'js') {
+    filteredEntries = applyJsFilter(har.log.entries, options.expression);
   } else {
     throw new Error('Unknown filter mode: ' + mode);
   }
@@ -156,34 +145,28 @@ function applyVisualFilter(entries, opts) {
   });
 }
 
-/* ── jq filter ────────────────────────────────────────────── */
-async function applyJqFilter(har, expression) {
-  if (!expression?.trim()) {
-    throw new Error('jq expression is empty.');
+/* ── JS filter ────────────────────────────────────────────── */
+function applyJsFilter(entries, script) {
+  if (!script?.trim()) {
+    throw new Error('Script is empty.');
   }
-
-  const jq = await loadJq();
-
+  let fn;
+  try {
+    // eslint-disable-next-line no-new-func
+    fn = new Function('entries', script);
+  } catch (err) {
+    throw new Error('Syntax error: ' + err.message);
+  }
   let result;
   try {
-    // jq-wasm: jq.json(inputObject, filterString) → transformed value
-    result = await jq.json(har, expression);
+    result = fn(entries);
   } catch (err) {
-    throw new Error('jq error: ' + (err.message || String(err)));
+    throw new Error('Runtime error: ' + err.message);
   }
-
-  // The filter should return the full HAR or the entries array
-  if (Array.isArray(result)) {
-    // User returned just the entries array — wrap it
-    return result;
+  if (!Array.isArray(result)) {
+    throw new Error('Script must return an array of entries. Got: ' + typeof result);
   }
-  if (result && result.log && Array.isArray(result.log.entries)) {
-    return result.log.entries;
-  }
-  throw new Error(
-    'jq filter must return either the full HAR object or a log.entries array. Got: ' +
-    JSON.stringify(result)?.slice(0, 120)
-  );
+  return result;
 }
 
 /* ── Helpers ──────────────────────────────────────────────── */

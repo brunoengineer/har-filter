@@ -325,6 +325,39 @@ main {
 }
 .jq-hint { font-size: .82rem; color: var(--text-sub); line-height: 1.65; }
 .jq-example { font-size: .78rem; }
+.js-examples {
+  margin-top: .75rem;
+}
+.js-examples-label {
+  font-size: .75rem;
+  color: var(--text-sub);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  display: block;
+  margin-bottom: .4rem;
+}
+.js-example-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+}
+.js-example-btn {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: .78rem;
+  font-family: monospace;
+  padding: .25rem .6rem;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.js-example-btn:hover {
+  background: var(--surface-3, var(--surface-2));
+  border-color: var(--accent);
+  color: var(--accent);
+}
 .jq-loading {
   display: flex;
   align-items: center;
