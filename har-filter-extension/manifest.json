@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "HAR Filter",
+  "version": "1.0.0",
+  "description": "Filter, inspect and export HAR network traces — right inside DevTools. Nothing leaves your browser.",
+  "devtools_page": "devtools.html",
+  "icons": {
+    "16": "img/icon-16.png",
+    "48": "img/icon-48.png",
+    "128": "img/icon-128.png"
+  }
+}

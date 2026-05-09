@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>HAR Filter</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ── SOURCE BAR ─────────────────────────────────────── -->
+  <div id="source-bar">
+    <button id="btn-capture" class="btn btn-primary">&#8659; Capture from Network</button>
+    <span class="source-sep">or</span>
+    <span id="file-trigger" class="file-label" role="button" tabindex="0">load .har file</span>
+    <input type="file" id="file-input" accept=".har,application/json" hidden />
+
+    <div id="file-info" class="hidden">
+      <span id="file-name"></span>
+      <span id="file-size"></span>
+      <button id="clear-file" class="btn btn-ghost btn-sm" title="Remove">&#10005;</button>
+    </div>
+
+    <div id="parse-status" class="status-inline hidden"></div>
+  </div>
+
+  <!-- ── FILTER PANEL ───────────────────────────────────── -->
+  <section id="filter-section" class="hidden">
+    <div class="panel">
+      <div class="panel-header">
+        <h2>Filter Rules</h2>
+      </div>
+
+      <div class="tab-panel">
+        <div class="filter-grid">
+
+          <div class="filter-group">
+            <label class="filter-label">URL Pattern</label>
+            <div class="url-row">
+              <input type="text" id="url-pattern" class="input-text" placeholder="e.g. /api/ or ^https://example" spellcheck="false" />
+              <label class="toggle-label">
+                <input type="checkbox" id="url-is-regex" />
+                <span>regex</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <label class="filter-label">HTTP Method</label>
+            <div id="method-checkboxes" class="checkbox-row"></div>
+          </div>
+
+          <div class="filter-group">
+            <label class="filter-label">Status Code</label>
+            <div class="range-row">
+              <input type="number" id="status-min" class="input-number" placeholder="100" min="0" max="999" />
+              <span class="range-sep">–</span>
+              <input type="number" id="status-max" class="input-number" placeholder="599" min="0" max="999" />
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <label class="filter-label">Response MIME Type</label>
+            <div id="mime-checkboxes" class="checkbox-grid"></div>
+          </div>
+
+          <div class="filter-group filter-group--wide">
+            <label class="filter-label" for="exclude-domains">Exclude Domains <span class="hint">(one per line)</span></label>
+            <textarea id="exclude-domains" class="input-textarea" rows="3" placeholder="cdn.example.com&#10;analytics.google.com" spellcheck="false"></textarea>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="panel-footer">
+        <button id="btn-filter" class="btn btn-primary" disabled>Filter HAR</button>
+        <button id="btn-reset-filters" class="btn btn-ghost">Reset Filters</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── OUTPUT SECTION ─────────────────────────────────── -->
+  <section id="output-section" class="hidden">
+    <div class="panel">
+      <div class="panel-header">
+        <h2>Result</h2>
+        <div id="stats-bar" class="stats-bar"></div>
+      </div>
+
+      <div class="output-actions">
+        <button id="btn-download" class="btn btn-primary">&#8595; Download .har</button>
+        <button id="btn-copy" class="btn btn-secondary">&#10697; Copy JSON</button>
+        <span id="copy-toast" class="toast hidden">Copied!</span>
+      </div>
+
+      <div class="table-wrapper">
+        <table id="preview-table">
+          <thead>
+            <tr>
+              <th data-col="method" class="sortable">Method <span class="sort-icon">&#8597;</span></th>
+              <th data-col="url" class="sortable">URL <span class="sort-icon">&#8597;</span></th>
+              <th data-col="status" class="sortable">Status <span class="sort-icon">&#8597;</span></th>
+              <th data-col="mime" class="sortable">MIME <span class="sort-icon">&#8597;</span></th>
+              <th data-col="size" class="sortable">Size <span class="sort-icon">&#8597;</span></th>
+              <th data-col="time" class="sortable">Time (ms) <span class="sort-icon">&#8597;</span></th>
+            </tr>
+          </thead>
+          <tbody id="preview-body"></tbody>
+        </table>
+        <p id="preview-truncation" class="table-note hidden"></p>
+      </div>
+
+      <!-- ── DETAIL PANEL ──────────────────────────────────── -->
+      <div id="detail-panel" class="hidden">
+        <div class="detail-header">
+          <div class="detail-meta">
+            <span id="detail-badge" class="td-method"></span>
+            <span id="detail-status-badge"></span>
+            <span id="detail-url-text" class="detail-url-text"></span>
+          </div>
+          <button id="detail-close" class="btn btn-ghost btn-sm">&#10005; Close</button>
+        </div>
+
+        <div class="detail-tab-bar" role="tablist">
+          <button class="tab active" id="tab-detail-req" role="tab">Request</button>
+          <button class="tab"        id="tab-detail-res" role="tab">Response</button>
+        </div>
+
+        <!-- Request tab -->
+        <div id="panel-detail-req" class="detail-content">
+          <div class="detail-section">
+            <div class="detail-section-title">Headers</div>
+            <div id="detail-req-headers" class="detail-kv-list"></div>
+          </div>
+          <div id="detail-payload-section" class="detail-section">
+            <div class="detail-section-title">Payload</div>
+            <pre id="detail-req-body" class="detail-code"></pre>
+          </div>
+        </div>
+
+        <!-- Response tab -->
+        <div id="panel-detail-res" class="detail-content hidden">
+          <div class="detail-section">
+            <div class="detail-section-title">Headers</div>
+            <div id="detail-res-headers" class="detail-kv-list"></div>
+          </div>
+          <div class="detail-section">
+            <div class="detail-section-title">Body</div>
+            <pre id="detail-res-body" class="detail-code"></pre>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <script src="panel.js"></script>
+</body>
+</html>

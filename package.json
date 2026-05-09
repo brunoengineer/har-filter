@@ -21,6 +21,7 @@
   "homepage": "https://github.com/brunoengineer/har-filter#readme",
   "devDependencies": {
     "@playwright/test": "^1.59.1",
+    "@types/node": "^25.6.2",
     "serve": "^14.2.4",
     "typescript": "^6.0.3"
   }
