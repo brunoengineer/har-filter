@@ -343,6 +343,26 @@ main {
   border: 1px solid rgba(248,81,73,.3);
   font-family: monospace;
   white-space: pre-wrap;
+  display: flex;
+  align-items: flex-start;
+  gap: .6rem;
+}
+.error-msg span {
+  flex: 1;
+}
+.error-close {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--danger);
+  cursor: pointer;
+  font-size: .9rem;
+  line-height: 1;
+  padding: 0;
+  opacity: .7;
+}
+.error-close:hover {
+  opacity: 1;
 }
 
 /* ── Output section ───────────────────────────────────────── */

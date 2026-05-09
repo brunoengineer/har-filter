@@ -40,7 +40,16 @@ const excludeDomains    = document.getElementById('exclude-domains');
 
 const jqExpression      = document.getElementById('jq-expression');
 const jqError           = document.getElementById('jq-error');
+const jqErrorText       = document.getElementById('jq-error-text');
+const jqErrorClose      = document.getElementById('jq-error-close');
 const jqLoading         = document.getElementById('jq-loading');
+
+let jqErrorTimer = null;
+
+jqErrorClose.addEventListener('click', () => {
+  jqError.classList.add('hidden');
+  clearTimeout(jqErrorTimer);
+});
 
 const btnFilter         = document.getElementById('btn-filter');
 const btnResetFilters   = document.getElementById('btn-reset-filters');
@@ -275,9 +284,11 @@ function handleWorkerError(msg) {
   btnFilter.disabled = false;
   btnFilter.textContent = 'Filter HAR';
 
-  if (msg.includes('jq')) {
-    jqError.textContent = msg;
+  if (tabJq.classList.contains('active')) {
+    jqErrorText.textContent = msg;
     jqError.classList.remove('hidden');
+    clearTimeout(jqErrorTimer);
+    jqErrorTimer = setTimeout(() => jqError.classList.add('hidden'), 8000);
   } else {
     setStatus(msg, true);
     parseStatus.classList.remove('hidden');

@@ -20,7 +20,7 @@
       <div id="drop-zone" role="button" tabindex="0" aria-label="Drop or select a HAR file">
         <div class="drop-icon">&#8659;</div>
         <p class="drop-primary">Drop your <code>.har</code> file here</p>
-        <p class="drop-secondary">or <label class="file-label" for="file-input">browse files</label></p>
+        <p class="drop-secondary">or <span class="file-label">browse files</span></p>
         <input type="file" id="file-input" accept=".har,application/json" hidden />
       </div>
       <div id="file-info" class="hidden">
@@ -106,7 +106,10 @@
   (.request.url | contains(&quot;/api/&quot;)) and
   (.response.status >= 200 and .response.status < 300)
 ))"></textarea>
-          <div id="jq-error" class="error-msg hidden"></div>
+          <div id="jq-error" class="error-msg hidden">
+            <span id="jq-error-text"></span>
+            <button id="jq-error-close" class="error-close" title="Dismiss">&#10005;</button>
+          </div>
           <div id="jq-loading" class="jq-loading hidden">
             <span class="spinner"></span> Loading jq-wasm…
           </div>
