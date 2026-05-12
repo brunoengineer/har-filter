@@ -119,7 +119,7 @@ The `har-filter-extension/` directory contains a **Manifest V3** Chrome extensio
 
 | | |
 |---|---|
-| ⚡ **Capture from Network** | One click captures all requests from the DevTools Network tab — no HAR export needed |
+| ⏺ **Live recording** | Start/Stop recorder built on `chrome.devtools.network.onRequestFinished` — captures requests as they happen and backfills response bodies via `getContent()`, so payloads are inspectable without exporting a HAR |
 | 📂 **Load .har file** | Same file-upload flow as the web app, available as a fallback |
 | 🔍 **Request detail panel** | Click any row to inspect request/response headers and body inline |
 | 🎛 **Same visual filters** | URL pattern, HTTP methods, status range, MIME types, excluded domains |
@@ -138,10 +138,13 @@ The `har-filter-extension/` directory contains a **Manifest V3** Chrome extensio
 
 1. Navigate to a page and open DevTools (`F12`).
 2. Click the **HAR Filter** tab.
-3. Click **Capture from Network** to load all requests currently in the Network tab, **or** click **load .har file** to upload a saved archive.
+3. Click **● Start Recording** *before* the traffic you want to capture (e.g. before reloading the page or triggering the action). The button turns red and a live counter shows requests as they come in. Click **■ Stop & Process** when done — bodies are fetched and the filter UI appears.
+   - Alternatively, click **load .har file** to import a saved archive instead.
 4. Apply visual filters and click **Filter HAR**.
 5. Click any row in the results table to inspect its request / response headers and body.
 6. Download the filtered `.har` or copy the JSON.
+
+> **Note on capture scope:** only requests that fire *while recording is active* are captured. Start the recorder first, then reload or interact with the page. Some responses legitimately have no body (204/304, redirects, opaque cross-origin, streamed) — those show a placeholder in the detail panel.
 
 ### Extension structure
 
