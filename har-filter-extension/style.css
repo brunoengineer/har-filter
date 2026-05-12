@@ -70,6 +70,14 @@ code {
 }
 .file-label:hover { text-decoration: underline; }
 
+.capture-count {
+  font-size: .78rem;
+  color: var(--text-sub);
+  font-variant-numeric: tabular-nums;
+}
+.btn-primary.recording { background: var(--danger, #c0392b); }
+.btn-primary.recording:hover:not(:disabled) { background: var(--danger, #c0392b); filter: brightness(1.1); }
+
 #file-info {
   display: flex;
   align-items: center;

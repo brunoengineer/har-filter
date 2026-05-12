@@ -12,9 +12,13 @@ let currentHar      = null;
 let currentFiltered = null;
 let sortState       = { col: null, dir: 'asc' };
 let previewEntries  = [];
+let recording       = false;
+let capturedEntries = [];
+let bodyPromises    = [];
 
 /* ── DOM refs ─────────────────────────────────────────────── */
 const btnCapture        = document.getElementById('btn-capture');
+const captureCount      = document.getElementById('capture-count');
 const fileTrigger       = document.getElementById('file-trigger');
 const fileInput         = document.getElementById('file-input');
 const fileInfo          = document.getElementById('file-info');
@@ -68,29 +72,73 @@ worker.onerror = function (e) {
   handleWorkerError('Worker error: ' + e.message);
 };
 
-/* ── Capture from Network tab ─────────────────────────────── */
-btnCapture.addEventListener('click', () => {
-  resetAll();
-  setStatus('Capturing network requests…', false);
-  parseStatus.classList.remove('hidden');
-
-  chrome.devtools.network.getHAR(harLog => {
-    if (chrome.runtime.lastError) {
-      handleWorkerError('Capture failed: ' + chrome.runtime.lastError.message);
-      return;
+/* ── Live recorder (onRequestFinished + getContent) ───────── */
+function onRequestFinishedHandler(request) {
+  capturedEntries.push(request);
+  updateCaptureCount();
+  const p = new Promise(resolve => {
+    try {
+      request.getContent((body, encoding) => {
+        if (!chrome.runtime.lastError && body != null && request.response?.content) {
+          request.response.content.text = body;
+          if (encoding) request.response.content.encoding = encoding;
+        }
+        resolve();
+      });
+    } catch {
+      resolve();
     }
-    // getHAR delivers the log object directly (not a full HAR); wrap it
-    if (!harLog || !Array.isArray(harLog.entries)) {
-      handleWorkerError('No network data returned. Open the DevTools Network tab and reload the page, then try again.');
-      return;
-    }
-    if (harLog.entries.length === 0) {
-      setStatus('No requests captured. Navigate to a page with the Network tab open, then click Capture.', true);
-      parseStatus.classList.remove('hidden');
-      return;
-    }
-    worker.postMessage({ action: 'load', har: { log: harLog } });
   });
+  bodyPromises.push(p);
+}
+
+function updateCaptureCount() {
+  const n = capturedEntries.length;
+  captureCount.textContent = n === 1 ? '1 request' : `${n.toLocaleString()} requests`;
+  captureCount.classList.toggle('hidden', n === 0);
+}
+
+function startRecording() {
+  resetAll();
+  capturedEntries = [];
+  bodyPromises = [];
+  recording = true;
+  chrome.devtools.network.onRequestFinished.addListener(onRequestFinishedHandler);
+  btnCapture.classList.add('recording');
+  btnCapture.innerHTML = '&#9632; Stop &amp; Process';
+  setStatus('Recording. Use your app or reload the page, then click Stop.', false);
+  parseStatus.classList.remove('hidden');
+  updateCaptureCount();
+}
+
+async function stopRecording() {
+  chrome.devtools.network.onRequestFinished.removeListener(onRequestFinishedHandler);
+  recording = false;
+  btnCapture.classList.remove('recording');
+  btnCapture.innerHTML = '&#9679; Start Recording';
+
+  if (capturedEntries.length === 0) {
+    setStatus('No requests captured. Use your app while recording is active, then click Stop.', true);
+    return;
+  }
+
+  setStatus(`Fetching response bodies for ${capturedEntries.length.toLocaleString()} requests…`, false);
+  await Promise.all(bodyPromises);
+
+  const har = {
+    log: {
+      version: '1.2',
+      creator: { name: 'HAR Filter', version: '1.0.0' },
+      pages: [],
+      entries: capturedEntries.slice()
+    }
+  };
+  worker.postMessage({ action: 'load', har });
+}
+
+btnCapture.addEventListener('click', () => {
+  if (recording) stopRecording();
+  else startRecording();
 });
 
 /* ── File upload (secondary) ──────────────────────────────── */
@@ -444,7 +492,7 @@ function showDetail(entry) {
       : tryFormatJson(content.text);
   } else {
     detailResBody.textContent =
-      '[Response body not captured — bodies are available when loading a .har file, or if the site includes them in the network trace]';
+      '[No response body — this request has no body (e.g. 204/304, redirect, opaque cross-origin, or streamed)]';
   }
 
   detailPanel.classList.remove('hidden');
@@ -528,6 +576,16 @@ btnResetFilters.addEventListener('click', () => {
 });
 
 function resetAll() {
+  if (recording) {
+    chrome.devtools.network.onRequestFinished.removeListener(onRequestFinishedHandler);
+    recording = false;
+    btnCapture.classList.remove('recording');
+    btnCapture.innerHTML = '&#9679; Start Recording';
+  }
+  capturedEntries = [];
+  bodyPromises = [];
+  captureCount.classList.add('hidden');
+  captureCount.textContent = '0 requests';
   currentHar = null;
   currentFiltered = null;
   fileInput.value = '';
